@@ -1,4 +1,5 @@
 import sqlite3
+from formules import is_leap_year
 
 bd_name = 'birthdates.db'
 
@@ -32,6 +33,35 @@ months_data = {
     'December': 'Декабря'
 }
 
+months_days = {
+    'January': 31,
+    'February': 28,
+    'March': 31,
+    'April': 30,
+    'May': 31,
+    'June': 30,
+    'July': 31,
+    'August': 31,
+    'September': 30,
+    'October': 31,
+    'November': 30,
+    'December': 31
+}
+
+
+def check_date_birth(day, month, year):
+    # if is_leap_year(int(year)) and str(month) == 'February':
+    #     if int(day) > int(months_days.get(month)) + 1:
+    #         return False
+    #     else:
+    #         return True
+    # else:
+    #     if int(day) > int(months_days.get(month)):
+    #         return False
+    #     else:
+    #         return True
+    return True
+
 
 def checker_people(id):
     con = sqlite3.connect(bd_name)
@@ -41,6 +71,20 @@ def checker_people(id):
         return True
     else:
         return False
+
+
+def deleter_friend(id, choose):
+    con = sqlite3.connect(bd_name)
+    cur = con.cursor()
+    result = cur.execute("""SELECT * from users WHERE inviter = ? AND id = ?""", (id, choose,)).fetchall()
+    for elem in result:
+        if int(elem[0]) == choose:
+            count = cur.execute("""DELETE FROM users WHERE id = ?""", (choose,))
+            con.commit()
+            return True
+        else:
+            continue
+    return False
 
 
 def return_all(id):

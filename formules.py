@@ -47,4 +47,3 @@ def days_until_birthday(year, month, day):  # Подсчёт дней до дн�
 def birth_nearests(days):
     calc = datetime.datetime.today() + datetime.timedelta(days=days)
     return str(calc.date()).split('-')
-
