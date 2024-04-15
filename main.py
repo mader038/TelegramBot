@@ -10,12 +10,12 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, C
     ReplyKeyboardMarkup
 import databaseBot
 from databaseBot import checker_people, return_all, birth_now_months, owner_birth, search_birth, check_date_birth, \
-    deleter_friend
+    deleter_friend, all_users, all_people, get_holidays, translate_text
 from formules import month_to_number, number_to_month, calc_age, days_until_birthday, birth_nearests
 
 BOT_TOKEN = '6832196238:AAHOMT7xy4omFntn2k-pjn6-M4A8Q3NO3Xs'
 
-admins = [1022869374]
+admins_id = [1022869374]
 
 storage = MemoryStorage()
 
@@ -28,10 +28,12 @@ command3 = KeyboardButton(text='🎊 Все дни рождения')
 command4 = KeyboardButton(text='Когда мой день рождения? 🤔')
 command5 = KeyboardButton(text='Добавить день рождение друга 💋')
 command6 = KeyboardButton(text='Удалить друга из списка 😕')
+command9 = KeyboardButton(text='🥳 Праздники сегодня')
+command0 = KeyboardButton(text='Ближайший праздник 🤩')
 command7 = KeyboardButton(text='🔗 Помощь')
 
 keyboard_all = ReplyKeyboardMarkup(keyboard=[[command1, command4],
-                                             [command2, command5],
+                                             [command2, command9, command0, command5],
                                              [command3, command6],
                                              [command7]],
                                    resize_keyboard=True)
@@ -95,9 +97,19 @@ async def help2(callback: CallbackQuery):
         text='🔗 Помощь',
         callback_data='help_pressed'
     )
-    menu_button = InlineKeyboardMarkup(
-        inline_keyboard=[[help_bot]]
+    admin_function = InlineKeyboardButton(
+        text='🚨 Админ-панель',
+        callback_data='admin_pressed'
     )
+    if callback.from_user.id in admins_id:
+        menu_button = InlineKeyboardMarkup(
+            inline_keyboard=[[help_bot],
+                             [admin_function]]
+        )
+    else:
+        menu_button = InlineKeyboardMarkup(
+            inline_keyboard=[[help_bot]]
+        )
     await callback.message.answer(
         text='Вжууух! ‍🌫️',
         reply_markup=keyboard_all
@@ -110,6 +122,53 @@ async def help2(callback: CallbackQuery):
     )
 
 
+@dp.callback_query(F.data == 'admin_pressed')
+async def admin_panel(callback: CallbackQuery):
+    user_button = InlineKeyboardButton(
+        text='🟢 Все пользователи (user)',
+        callback_data='us_pressed'
+    )
+    people_button = InlineKeyboardButton(
+        text='🔴 Все пользователи (people)',
+        callback_data='pe_pressed'
+    )
+    admin_buttons = InlineKeyboardMarkup(
+        inline_keyboard=[[user_button],
+                         [people_button]]
+    )
+    if callback.from_user.id in admins_id:
+        await callback.message.answer(
+            text=f'Здравствуйте, {callback.from_user.username}, выберите дей-ие 😉',
+            reply_markup=admin_buttons
+        )
+    else:
+        await callback.message.reply(text='Извините, моя твоя не понимать')
+
+
+@dp.callback_query(F.data == 'us_pressed')
+async def us_table(callback: CallbackQuery):
+    if callback.from_user.id in admins_id:
+        result = all_users()
+        text = ''
+        for elem in result:
+            text += f'{elem[0]}:  {elem[1]}, {elem[2]}, {elem[3]}, {elem[4]} {elem[5]} {elem[6]}, {elem[7]}\n'
+        await callback.message.answer(text)
+    else:
+        await callback.message.reply(text='Извините, моя твоя не понимать')
+
+
+@dp.callback_query(F.data == 'pe_pressed')
+async def pe_table(callback: CallbackQuery):
+    if callback.from_user.id in admins_id:
+        result = all_people()
+        text = ''
+        for elem in result:
+            text += f'{elem[0]}:  {elem[1]}, {elem[3]}, {elem[4]}\n'
+        await callback.message.answer(text)
+    else:
+        await callback.message.reply(text='Извините, моя твоя не понимать')
+
+
 @dp.callback_query(F.data == 'help_pressed')
 async def help2(callback: CallbackQuery):
     await callback.message.answer(
@@ -118,7 +177,9 @@ async def help2(callback: CallbackQuery):
              '2. /births_nearest - Ближайший день рождения.\n'
              '3. /every_births - Все дни рождения друзей.\n'
              '4. /my_births - Сколько осталось до твоего дня рождения.\n'
-             '5. /delete_friend - Удалить друга из списка.\n\n'
+             '5. /delete_friend - Удалить друга из списка.\n'
+             '6. /holidays - Праздники сегодня.\n'
+             '7. /holidays_nearest - Ближайший праздник.\n\n'
              'Если что, под клавиатурой есть кнопки, ты всегда можешь функционировать с ними! ❤\n\n'
              '🚨 Чтобы вам не выводило, что у вас пусто среди друзей, то просто добавьте их!\n'
              '/add_births - Добавь друга в свой список!',
@@ -135,12 +196,48 @@ async def help(message: Message):
              '2. /births_nearest - Ближайший день рождения.\n'
              '3. /every_births - Все дни рождения друзей.\n'
              '4. /my_births - Сколько осталось до твоего дня рождения.\n'
-             '5. /delete_friend - Удалить друга из списка.\n\n'
+             '5. /delete_friend - Удалить друга из списка.\n'
+             '6. /holidays - Праздники сегодня.\n'
+             '7. /holidays_nearest - Ближайший праздник.\n\n'
              'Если что, под клавиатурой есть кнопки, ты всегда можешь функционировать с ними! ❤\n\n'
              '🚨 Чтобы вам не выводило, что у вас пусто среди друзей, то просто добавьте их!\n'
              '/add_births - Добавь друга в свой список!',
         reply_markup=keyboard_all
     )
+
+
+@dp.message(Command(commands='holidays'))
+@dp.message(F.text == '🥳 Праздники сегодня')
+async def holiday_today(message: Message):
+    holidays = get_holidays(datetime.datetime.today().year, int(datetime.datetime.today().month),
+                            datetime.datetime.today().day)
+    if holidays:
+        text = f"Список праздников на {datetime.datetime.today().date()}:\n"
+        for holiday in holidays:
+            text += f"- {translate_text(holiday['name'])}\n"
+        await message.answer(text)
+    else:
+        await message.answer("Сегодня в России нету праздников. 😞")
+
+
+@dp.message(Command(commands='holidays_nearest'))
+@dp.message(F.text == 'Ближайший праздник 🤩')
+async def holiday_nearest(message: Message):
+    await message.answer('Пожалуйста, подождите, выполняется поиск...')
+    flag = True
+    start = datetime.datetime.today().date()
+    count = 1
+    while flag:
+        holidays = get_holidays(start.year, int(start.month), start.day)
+        if holidays:
+            text = f"Список праздников на {start}:\n"
+            for holiday in holidays:
+                text += f"- {translate_text(holiday['name'])}\n"
+            await message.answer(text)
+            break
+        else:
+            start += datetime.timedelta(days=count)
+            count += 1
 
 
 @dp.message(Command(commands='births_in_now_months'))
@@ -193,9 +290,9 @@ async def every_births(message: Message):
 @dp.message(Command(commands='births_nearest'))
 @dp.message(F.text == '🍾 Ближайший день рождения')
 async def birth_nearest(message: Message):
-    days = list()
     gender = ''
     friends = return_all(message.from_user.id)
+    days = list()
     for elem in friends:
         days.append(days_until_birthday(elem[6], month_to_number(elem[5]), elem[4]))
     if days != list():
@@ -222,13 +319,22 @@ async def birth_nearest(message: Message):
 @dp.message(F.text == 'Удалить друга из списка 😕')
 async def delete_birth(message: Message, state: FSMContext):
     friends = ''
-    await message.answer('Вы действительно хотите удалить друга? Хорошо, вот ваши друзья:')
-    for elem in return_all(message.from_user.id):
-        friends += f'ID: {elem[0]} - {elem[1]} {elem[2]} ({elem[4]}.{month_to_number(elem[5])}.{elem[6]})\n'
-    await message.answer(friends)
-    await message.answer('Хорошо, а теперь пожалуйста введите ID вашего друга!\n'
-                         'Если вы передумали, то напишите /cancel')
-    await state.set_state(deleterFSM.fill_id_friend)
+    days = list()
+    for elem in friends:
+        days.append(days_until_birthday(elem[6], month_to_number(elem[5]), elem[4]))
+    if days != list():
+        await message.answer('Вы действительно хотите удалить друга? Хорошо, вот ваши друзья:')
+        for elem in return_all(message.from_user.id):
+            friends += f'ID: {elem[0]} - {elem[1]} {elem[2]} ({elem[4]}.{month_to_number(elem[5])}.{elem[6]})\n'
+        await message.answer(friends)
+        await message.answer('Хорошо, а теперь пожалуйста введите ID вашего друга!\n'
+                             'Если вы передумали, то напишите /cancel')
+        await state.set_state(deleterFSM.fill_id_friend)
+    else:
+        await message.answer(
+            f'Похоже ваш список пуст.. 😞\n'
+            f'Добавьте друзей с помощью команды /add_births 😁'
+        )
 
 
 # Дальше идут машины состояний.

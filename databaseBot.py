@@ -1,5 +1,7 @@
 import sqlite3
 from formules import is_leap_year
+from translate import Translator
+import requests
 
 bd_name = 'birthdates.db'
 
@@ -50,17 +52,16 @@ months_days = {
 
 
 def check_date_birth(day, month, year):
-    # if is_leap_year(int(year)) and str(month) == 'February':
-    #     if int(day) > int(months_days.get(month)) + 1:
-    #         return False
-    #     else:
-    #         return True
-    # else:
-    #     if int(day) > int(months_days.get(month)):
-    #         return False
-    #     else:
-    #         return True
-    return True
+    if is_leap_year(int(year)) and str(month) == 'February':
+        if int(day) > int(months_days.get(str(month))) + 1:
+            return False
+        else:
+            return True
+    else:
+        if int(day) > int(months_days.get(str(month))):
+            return False
+        else:
+            return True
 
 
 def checker_people(id):
@@ -114,3 +115,41 @@ def search_birth(day, month, invite):
     result = cur.execute("""SELECT * from users WHERE inviter = ? AND day = ? AND month = ?""",
                          (invite, day, month,)).fetchall()
     return result
+
+
+def all_users():
+    con = sqlite3.connect(bd_name)
+    cur = con.cursor()
+    result = cur.execute("""SELECT * from users""").fetchall()
+    return result
+
+
+def all_people():
+    con = sqlite3.connect(bd_name)
+    cur = con.cursor()
+    result = cur.execute("""SELECT * from people""").fetchall()
+    return result
+
+
+def translate_text(text, target_language='ru'):
+    translator = Translator(to_lang=target_language)
+    translated_text = translator.translate(text)
+    return translated_text
+
+
+def get_holidays(year, month, day):
+    url = "https://calendarific.com/api/v2/holidays"
+    params = {
+        "api_key": 'qWs9IHHpJDEkc69S9xvbNxJtmlmKaQyB',
+        "country": 'RU',
+        "year": year,
+        "month": month,
+        "day": day
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        return data['response']['holidays']
+    else:
+        print("Ошибка при запросе:", response.status_code)
+        return None
