@@ -22,15 +22,15 @@ storage = MemoryStorage()
 bot = Bot(BOT_TOKEN)
 dp = Dispatcher(storage=storage)
 
-command1 = KeyboardButton(text='🎉 Дни рождения в этом месяце')
-command2 = KeyboardButton(text='🍾 Ближайший день рождения')
-command3 = KeyboardButton(text='🎊 Все дни рождения')
-command4 = KeyboardButton(text='Когда мой день рождения? 🤔')
-command5 = KeyboardButton(text='Добавить день рождение друга 💋')
-command6 = KeyboardButton(text='Удалить друга из списка 😕')
-command9 = KeyboardButton(text='🥳 Праздники сегодня')
-command0 = KeyboardButton(text='Ближайший праздник 🤩')
-command7 = KeyboardButton(text='🔗 Помощь')
+command1 = KeyboardButton(text='🎉 Дни рождения в этом месяце', resize_keyboard=True)
+command2 = KeyboardButton(text='🍾 Ближайший день рождения', resize_keyboard=True)
+command3 = KeyboardButton(text='🎊 Все дни рождения', resize_keyboard=True)
+command4 = KeyboardButton(text='Когда мой день рождения? 🤔', resize_keyboard=True)
+command5 = KeyboardButton(text='Добавить день рождение друга 💋', resize_keyboard=True)
+command6 = KeyboardButton(text='Удалить друга из списка 😕', resize_keyboard=True)
+command9 = KeyboardButton(text='🥳 Праздники сегодня', resize_keyboard=True)
+command0 = KeyboardButton(text='Ближайший праздник 🤩', resize_keyboard=True)
+command7 = KeyboardButton(text='🔗 Помощь', resize_keyboard=True)
 
 keyboard_all = ReplyKeyboardMarkup(keyboard=[[command1, command4],
                                              [command2, command9, command0, command5],
@@ -319,16 +319,13 @@ async def birth_nearest(message: Message):
 @dp.message(F.text == 'Удалить друга из списка 😕')
 async def delete_birth(message: Message, state: FSMContext):
     friends = ''
-    days = list()
-    for elem in friends:
-        days.append(days_until_birthday(elem[6], month_to_number(elem[5]), elem[4]))
-    if days != list():
+    if return_all(message.from_user.id) != list():
         await message.answer('Вы действительно хотите удалить друга? Хорошо, вот ваши друзья:')
         for elem in return_all(message.from_user.id):
             friends += f'ID: {elem[0]} - {elem[1]} {elem[2]} ({elem[4]}.{month_to_number(elem[5])}.{elem[6]})\n'
         await message.answer(friends)
         await message.answer('Хорошо, а теперь пожалуйста введите ID вашего друга!\n'
-                             'Если вы передумали, то напишите /cancel')
+                             'Если вы передумали, то используйте /cancel')
         await state.set_state(deleterFSM.fill_id_friend)
     else:
         await message.answer(
